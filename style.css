@@ -1,0 +1,414 @@
+@font-face {
+  font-family: "TWK Everett Mono";
+  src: url("fonts/TWKEverettMono-Medium.woff2") format("woff2"),
+       url("fonts/TWKEverettMono-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "TWK Everett Mono";
+  src: url("fonts/TWKEverettMono-Extrabold.woff2") format("woff2"),
+       url("fonts/TWKEverettMono-Extrabold.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #fafafa;
+  font-family: "TWK Everett Mono", monospace;
+  color: #323232;
+}
+
+/* Frame — padding locked to Figma (24px), width fluid */
+.frame {
+  position: relative;
+  width: 100%;
+  height: 900px;
+  padding: 24px;
+}
+
+/* Content box — fills frame minus padding, height locked at 852px */
+.content-box {
+  position: relative;
+  width: 100%;
+  height: 852px;
+}
+
+/* Shared type */
+.frame p {
+  font-size: 8px;
+  line-height: 16px;
+  letter-spacing: 1.12px;
+  word-break: break-word;
+}
+
+.label {
+  font-weight: 800;
+}
+
+/* ---------- Landing (back layer) ---------- */
+
+.back {
+  position: absolute;
+  inset: 0;
+  transition: filter 400ms ease;
+}
+
+.is-open .back {
+  filter: blur(5px);
+}
+
+/* About & Info — flex rows. At the 1440px design width the gap is exactly
+   83px (Figma: label 0-35, cols at 118/472/826, all 271 wide); below that
+   the gap and columns compress fluidly. */
+.about,
+.info {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px min(83px, 5.764vw);
+}
+
+.about {
+  top: 0;
+  /* keep clear of the right-anchored logo (153 + 59 + breathing room) */
+  max-width: calc(100% - 240px);
+}
+
+.info {
+  top: 146px;
+  /* explicit width: absolute flex containers shrink-to-fit to text max-content,
+     which is narrower than the 271px column basis and causes premature wrap */
+  width: 100%;
+  text-align: justify;
+}
+
+.about .label,
+.info .label {
+  flex: 0 0 35px;
+}
+
+.about .col,
+.info .col {
+  flex: 0 1 271px;
+  min-width: 190px;
+  font-weight: 500;
+}
+
+.about .col {
+  text-align: justify;
+}
+
+/* Below ~800px the About columns would wrap into Info's fixed slot —
+   switch the two sections to normal flow (Figma gap: 146 - 122 = 24px). */
+@media (max-width: 800px) {
+  .about,
+  .info {
+    position: static;
+    max-width: calc(100% - 240px);
+  }
+
+  .info {
+    margin-top: 24px;
+    max-width: 100%;
+  }
+}
+
+/* Logo — right-anchored (59px from content right edge in Figma), 153 x 53.429 */
+.logo {
+  position: absolute;
+  top: 0;
+  right: 59px;
+  width: 153px;
+  height: 53.429px;
+  overflow: hidden;
+}
+
+.logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Time — x:0 y:584, 153 x 49 */
+.time {
+  position: absolute;
+  top: 584px;
+  left: 0;
+  width: 153px;
+  height: 49px;
+  border-radius: 6px;
+}
+
+.time p {
+  font-weight: 800;
+}
+
+/* Available pill — x:0 y:803, 211 x 49 */
+.available {
+  position: absolute;
+  top: 803px;
+  left: 0;
+  width: 211px;
+  height: 49px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 3px;
+  background: #ebebeb;
+  border-radius: 12px;
+}
+
+.available .dot {
+  width: 12px;
+  height: 11px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #20f514; /* Figma ellipse fill */
+  transition: background 300ms ease;
+}
+
+.available.is-off .dot {
+  background: #b4b4b4;
+}
+
+.available p {
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Dark content box — right-anchored, 212 x 268 at y:584 */
+.dark-box {
+  position: absolute;
+  top: 584px;
+  right: 0;
+  width: 212px;
+  height: 268px;
+  background: #323232;
+  border-radius: 12px;
+}
+
+/* ---------- Icon buttons (NEXT / X) ---------- */
+
+.icon-btn {
+  width: 35px;
+  height: 49px;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover — gentle scale-down (Figma's 0.75 read as too jumpy in motion);
+   press goes slightly further for tactile feedback */
+.icon-btn:hover {
+  transform: scale(0.9);
+}
+
+.icon-btn:active {
+  transform: scale(0.84);
+}
+
+.icon-btn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Landing NEXT — 24px left of the dark box, y:584 */
+.next-landing {
+  position: absolute;
+  top: 584px;
+  right: 236px;
+  /* reappears after the modal has morphed back */
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease 320ms;
+}
+
+.is-open .next-landing {
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;
+}
+
+/* ---------- Project modal ---------- */
+
+.modal-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Modal — 684 x 414, centered in content box.
+   Revealed by an expanding clip-path window (no content distortion);
+   JS sets the collapsed clip/transform, these transitions carry the morph. */
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* 684px at full size; shrinks to leave room for the side buttons (35 + 24) */
+  width: min(684px, calc(100% - 118px));
+  height: 414px;
+  margin-top: -207px;
+  transform: translateX(-50%);
+  background: #ebebeb;
+  border-radius: 12px;
+  transition: clip-path 520ms cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+.modal.no-anim,
+.modal.no-anim .image-box {
+  transition: none !important;
+}
+
+/* Details reveal — the text itself decodes in via the JS scramble effect
+   (app.js); CSS only gates visibility so closed-state text never flashes */
+.modal-content > * {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.is-open .modal-content > * {
+  opacity: 1;
+  transition: opacity 180ms ease 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back,
+  .modal,
+  .image-box,
+  .modal-content > *,
+  .icon-btn {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* Modal typography — 12px / tracking 1.68px base */
+.modal p {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 1.68px;
+}
+
+/* CLIENT NAME — x:12 y:12, 324 x 55, Medium 18px / tracking 2.52px */
+.client-name {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: min(324px, calc(100% - 24px));
+  height: 55px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 18px !important;
+  letter-spacing: 2.52px !important;
+}
+
+/* Detail rows — x:12, 212 wide; label w:100 at x:0, value w:100 at x:112 */
+.row {
+  position: absolute;
+  left: 12px;
+  width: 212px;
+  height: 55px;
+}
+
+.row.service  { top: 79px; }
+.row.year     { top: 147px; height: 54px; }
+.row.industry { top: 213px; }
+
+.row-label,
+.row-value {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.row-label {
+  left: 0;
+  font-weight: 800;
+}
+
+.row-value {
+  left: 112px;
+  font-weight: 500;
+}
+
+/* CLIENTWEBSITE.COM — x:12 y:347, 212 x 55, Extrabold */
+.website {
+  position: absolute;
+  top: 347px;
+  left: 12px;
+  width: 212px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+}
+
+/* Image box — x:404 y:12, 268 x 390.
+   Media slot: a video/img child should use width/height 100% + object-fit cover.
+   Morphs from the landing dark box (FLIP transform set by JS). */
+.image-box {
+  position: absolute;
+  top: 12px;
+  right: 12px; /* 684 - 404 - 268 = 12 in Figma; stays anchored when modal shrinks */
+  width: 268px;
+  height: 390px;
+  background: #323232;
+  border-radius: 12px;
+  overflow: hidden;
+  transform-origin: top left;
+  transition: transform 520ms cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+/* X button — 24px right of modal, top-aligned with modal */
+.x-btn {
+  position: absolute;
+  top: calc(50% - 207px);
+  left: calc(50% + min(342px, (100% - 118px) / 2) + 24px);
+  background: #ebebeb;
+  border-radius: 12px;
+  font-family: "TWK Everett Mono", monospace;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 16px;
+  letter-spacing: 2.52px;
+  color: #323232;
+  text-indent: 2.52px; /* optically center: cancels trailing letter-space */
+}
+
+/* Modal NEXT — 24px right of modal, bottom-aligned with modal */
+.modal-next {
+  position: absolute;
+  top: calc(50% + 207px - 49px);
+  left: calc(50% + min(342px, (100% - 118px) / 2) + 24px);
+}
+
+/* Modal side buttons fade in once the shape has settled */
+.x-btn,
+.modal-next {
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;
+}
+
+.is-open .x-btn,
+.is-open .modal-next {
+  opacity: 1;
+  pointer-events: auto;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 260ms ease 300ms;
+}

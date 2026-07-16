@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ARCTIC RESEARCH</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="frame">
+    <div class="content-box">
+
+      <!-- Landing content (blurs when project opens) -->
+      <div class="back">
+        <!-- About -->
+        <section class="about">
+          <p class="label">ABOUT</p>
+          <p class="col col-1">AN INDEPENDENT, RESEARCH-DRIVEN GRAPHIC DESIGN STUDIO (&amp;) CREATIVE PRACTICE DEDICATED TO EXPLORE UNKOWN REGIONS AROUND DESIGN THROUGH EXPERIMENTATION.</p>
+          <p class="col col-2">THE STUDIOS SERVICES &amp; CURRENT CAPABILITIES INCLUDES GRAPHIC DESIGN ACROSS VARIOUS MEDIA, CREATIVE (&amp;) ART DIRECTION, DESIGN (&amp;) STRATEGY FOR VISUAL IDENTITIES.&nbsp;</p>
+        </section>
+
+        <!-- Info -->
+        <section class="info">
+          <p class="label">INFO</p>
+          <div class="col col-1">
+            <p>EMAIL:</p>
+            <p>&#8203;</p>
+            <p>OFFICE@ARCTICRESEARCH.STUDIO</p>
+          </div>
+          <div class="col col-2">
+            <p>INSTAGRAM:</p>
+            <p>&#8203;</p>
+            <p>ARCTIC.RESEARCH</p>
+          </div>
+          <div class="col col-3">
+            <p>ARE.NA</p>
+            <p>&#8203;</p>
+            <p>ARCTIC-RESEARCH-CREW</p>
+          </div>
+        </section>
+
+        <!-- Logo -->
+        <div class="logo">
+          <img src="assets/logo.svg" alt="ARC logo" />
+        </div>
+
+        <!-- Time -->
+        <div class="time">
+          <p id="clock">10:47 P.M.</p>
+        </div>
+
+        <!-- Availability pill — state driven by content/site.json -->
+        <div class="available" id="availability">
+          <span class="dot"></span>
+          <p id="availability-label">AVAILABLE FOR PROJECTS</p>
+        </div>
+      </div>
+
+      <!-- Dark content box -->
+      <div class="dark-box" id="dark-box"></div>
+
+      <!-- Next button (opens content) -->
+      <button class="icon-btn next-landing" id="open-btn" type="button" aria-label="Open project">
+        <img src="assets/next.svg" alt="" />
+      </button>
+
+      <!-- Project modal layer -->
+      <div class="modal-layer" id="modal-layer" hidden>
+        <div class="modal" id="modal">
+          <div class="modal-content">
+            <p class="client-name" id="p-name">CLIENT NAME</p>
+            <div class="row service">
+              <p class="row-label">SERVICE</p>
+              <p class="row-value" id="p-service">BRAND IDENTITY</p>
+            </div>
+            <div class="row year">
+              <p class="row-label">YEAR</p>
+              <p class="row-value" id="p-year">2026</p>
+            </div>
+            <div class="row industry">
+              <p class="row-label">INDUSTRY</p>
+              <p class="row-value" id="p-industry">AEROSPACE</p>
+            </div>
+            <p class="website" id="p-website">CLIENTWEBSITE.COM</p>
+          </div>
+          <div class="image-box" id="image-box">
+            <!-- demo reel video / project photos go here:
+                 <video src="..." autoplay muted loop playsinline></video>
+                 media should fill: width/height 100%, object-fit: cover -->
+          </div>
+        </div>
+        <button class="icon-btn x-btn" id="close-btn" type="button" aria-label="Close project">X</button>
+        <button class="icon-btn modal-next" id="next-btn" type="button" aria-label="Next project">
+          <img src="assets/next-right.svg" alt="" />
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Agentation — visual feedback tool for AI agents (dev only, never loads outside localhost) -->
+  <script type="module">
+    if (["localhost", "127.0.0.1"].includes(location.hostname)) {
+      try {
+        const [React, { createRoot }, { Agentation }] = await Promise.all([
+          import("https://esm.sh/react@18"),
+          import("https://esm.sh/react-dom@18/client"),
+          import("https://esm.sh/agentation?deps=react@18,react-dom@18"),
+        ]);
+        const mount = document.createElement("div");
+        mount.id = "agentation-root";
+        document.body.appendChild(mount);
+        createRoot(mount).render(React.createElement(Agentation));
+      } catch (err) {
+        console.warn("Agentation failed to load:", err);
+      }
+    }
+  </script>
+</body>
+</html>

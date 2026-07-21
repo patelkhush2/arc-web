@@ -1,7 +1,19 @@
-// ---------- Site content (content/site.json — future CMS source) ----------
-// All client-editable content lives in one JSON document: availability plus
-// the project list. Swapping in a CMS later only means changing where this
-// object comes from; the rendering below stays identical.
+// ---------- Site content (Sanity CMS, with local JSON fallback) ----------
+// Client edits live in Sanity Studio: Site Settings (availability toggle) +
+// Projects. Published changes hit the CDN in ~60s — no redeploy needed.
+// Set SANITY_PROJECT_ID after creating the project (studio/.env + here).
+const SANITY_PROJECT_ID = "REPLACE_ME"; // from sanity.io/manage
+const SANITY_DATASET = "production";
+const SANITY_API_VERSION = "2024-01-01";
+
+const SANITY_QUERY = encodeURIComponent(`{
+  "available": coalesce(*[_id == "siteSettings"][0].available, true),
+  "projects": *[_type == "project"] | order(order asc) {
+    name, service, year, industry, website, websiteUrl,
+    "media": media.asset->url
+  }
+}`);
+
 let site = { available: true, projects: [] };
 let projectIndex = 0;
 
@@ -141,14 +153,48 @@ function renderProject(i, { decode = false } = {}) {
   }
 }
 
-fetch("content/site.json")
-  .then((r) => r.json())
-  .then((data) => {
-    site = data;
-    renderAvailability();
-    renderProject(0);
-  })
-  .catch((err) => console.warn("site.json failed to load:", err));
+function applySite(data) {
+  site = {
+    available: data?.available !== false,
+    projects: Array.isArray(data?.projects) ? data.projects : [],
+  };
+  projectIndex = 0;
+  renderAvailability();
+  renderProject(0);
+}
+
+function loadFromJson() {
+  return fetch("content/site.json")
+    .then((r) => r.json())
+    .then(applySite);
+}
+
+function loadSite() {
+  if (!SANITY_PROJECT_ID || SANITY_PROJECT_ID === "REPLACE_ME") {
+    return loadFromJson().catch((err) =>
+      console.warn("site.json failed to load:", err),
+    );
+  }
+
+  const url =
+    `https://${SANITY_PROJECT_ID}.apicdn.sanity.io/v${SANITY_API_VERSION}` +
+    `/data/query/${SANITY_DATASET}?query=${SANITY_QUERY}`;
+
+  return fetch(url)
+    .then((r) => {
+      if (!r.ok) throw new Error(`Sanity ${r.status}`);
+      return r.json();
+    })
+    .then(({ result }) => applySite(result))
+    .catch((err) => {
+      console.warn("Sanity fetch failed, falling back to site.json:", err);
+      return loadFromJson().catch((e) =>
+        console.warn("site.json failed to load:", e),
+      );
+    });
+}
+
+loadSite();
 
 // ---------- Live NYC clock (Luxon) ----------
 const clockEl = document.getElementById("clock");
@@ -225,6 +271,7 @@ function openModal() {
   // Swap the real dark box for the morphing image box, then expand
   modal.classList.remove("no-anim");
   darkBox.style.visibility = "hidden";
+  document.getElementById("showreel")?.pause();
   frame.classList.add("is-open");
   setExpanded();
 
@@ -275,6 +322,7 @@ function startCollapse() {
   const cleanup = () => {
     cancelCloseCleanup();
     darkBox.style.visibility = "";
+    document.getElementById("showreel")?.play().catch(() => {});
     modalLayer.hidden = true;
     modal.classList.add("no-anim");
     setExpanded();

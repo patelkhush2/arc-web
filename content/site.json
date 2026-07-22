@@ -10,5 +10,6 @@
       "websiteUrl": "https://clientwebsite.com",
       "media": null
     }
-  ]
+  ],
+  "fallback": true
 }

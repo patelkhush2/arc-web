@@ -50,11 +50,31 @@ body {
 }
 
 /* Shared type */
-.frame p {
+.frame p,
+.frame .info-link {
   font-size: 9px;
   line-height: 17px;
   letter-spacing: 1.12px;
   word-break: break-word;
+}
+
+/* Info actions — look like body text, behave like controls */
+.info-link {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.info-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .label {
@@ -330,11 +350,13 @@ body {
   }
 }
 
-/* Modal typography — 12px / tracking 1.68px base */
-.modal p {
+/* Modal typography — 12px / tracking 1.68px base; always display in caps */
+.modal p,
+.modal .website {
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 1.68px;
+  text-transform: uppercase;
 }
 
 /* CLIENT NAME — x:12 y:12, 324 x 55, Medium 18px / tracking 2.52px */
@@ -397,6 +419,23 @@ body {
   display: flex;
   align-items: center;
   font-weight: 800;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.website:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.website.is-disabled {
+  pointer-events: none;
+  cursor: default;
+}
+
+.website.is-disabled:hover {
+  text-decoration: none;
 }
 
 /* Image box — x:404 y:12, 268 x 390.

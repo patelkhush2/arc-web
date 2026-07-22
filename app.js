@@ -123,6 +123,22 @@ function projectTextTargets(p) {
   ];
 }
 
+function syncWebsiteLink(p) {
+  const el = document.getElementById("p-website");
+  const url = p?.websiteUrl || "";
+  if (url) {
+    el.href = url;
+    el.target = "_blank";
+    el.rel = "noopener noreferrer";
+    el.classList.remove("is-disabled");
+  } else {
+    el.removeAttribute("href");
+    el.removeAttribute("target");
+    el.removeAttribute("rel");
+    el.classList.add("is-disabled");
+  }
+}
+
 function setProjectMedia(imageBoxEl, p) {
   imageBoxEl.innerHTML = "";
   if (!p?.media) return;
@@ -143,6 +159,7 @@ function setProjectMedia(imageBoxEl, p) {
 function renderProject(i, { decode = false, mediaTransition = false } = {}) {
   const p = site.projects[i];
   if (!p) return;
+  syncWebsiteLink(p);
   projectTextTargets(p).forEach(([el, text], idx) => {
     if (decode) {
       scramble(el, text, { delay: idx * 45 });
@@ -368,4 +385,41 @@ document.getElementById("next-btn").addEventListener("click", () => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && frame.classList.contains("is-open")) closeModal();
+});
+
+// Info email — copy + scramble confirmation
+const EMAIL_ADDRESS = "OFFICE@ARCTICRESEARCH.STUDIO";
+const emailEl = document.getElementById("info-email");
+let emailCopyBusy = false;
+
+emailEl.addEventListener("click", async () => {
+  if (emailCopyBusy) return;
+  emailCopyBusy = true;
+  try {
+    await navigator.clipboard.writeText(EMAIL_ADDRESS);
+  } catch {
+    // Fallback for older browsers / denied permission
+    const ta = document.createElement("textarea");
+    ta.value = EMAIL_ADDRESS;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+    } catch (_) {
+      /* ignore */
+    }
+    document.body.removeChild(ta);
+  }
+
+  scramble(emailEl, "EMAIL COPIED");
+  clearTimeout(emailEl._restoreTimer);
+  emailEl._restoreTimer = setTimeout(() => {
+    scramble(emailEl, EMAIL_ADDRESS);
+    const settleMs = EMAIL_ADDRESS.length * 26 + 130 + 80;
+    setTimeout(() => {
+      emailCopyBusy = false;
+    }, settleMs);
+  }, 1600);
 });

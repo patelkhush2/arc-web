@@ -344,7 +344,9 @@ body {
   }
 
   .image-box.is-swapping > video,
-  .image-box.is-swapping > img {
+  .image-box.is-swapping > img,
+  .image-box.is-mixing > .media-outgoing,
+  .image-box.is-mixing > .media-incoming {
     filter: none;
     opacity: 1;
   }
@@ -456,6 +458,8 @@ body {
 
 .image-box > video,
 .image-box > img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -463,11 +467,27 @@ body {
   transition: filter 600ms ease, opacity 600ms ease;
 }
 
-/* Project swap — media blurs out into the white plate (not a dead black hole) */
+/* Project swipe — media blurs out into the white plate */
 .image-box.is-swapping > video,
 .image-box.is-swapping > img {
   filter: blur(5px);
   opacity: 0;
+}
+
+/* Close morph — both medias stack and mix (no white flash) */
+.image-box > .media-incoming {
+  opacity: 0;
+  filter: blur(5px);
+}
+
+.image-box.is-mixing > .media-outgoing {
+  opacity: 0;
+  filter: blur(5px);
+}
+
+.image-box.is-mixing > .media-incoming {
+  opacity: 1;
+  filter: blur(0);
 }
 
 /* X button — 24px right of modal, top-aligned with modal */

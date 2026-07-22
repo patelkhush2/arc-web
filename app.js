@@ -140,6 +140,7 @@ function syncWebsiteLink(p) {
 }
 
 function setProjectMedia(imageBoxEl, p) {
+  imageBoxEl.classList.remove("is-swapping", "is-mixing");
   imageBoxEl.innerHTML = "";
   if (!p?.media) return;
   const isVideo = /\.(mp4|webm|mov)$/i.test(p.media);
@@ -156,6 +157,76 @@ function setProjectMedia(imageBoxEl, p) {
   imageBoxEl.appendChild(el);
 }
 
+function createShowreelEl() {
+  const showreel = document.getElementById("showreel");
+  const el = document.createElement("video");
+  el.src = showreel?.currentSrc || showreel?.src || "assets/showreel.mp4";
+  el.autoplay = true;
+  el.muted = true;
+  el.loop = true;
+  el.playsInline = true;
+  if (showreel && Number.isFinite(showreel.currentTime)) {
+    try {
+      el.currentTime = showreel.currentTime;
+    } catch (_) {
+      /* ignore seek before metadata */
+    }
+  }
+  el.play().catch(() => {});
+  return el;
+}
+
+const MEDIA_SWAP_MS = 600;
+const MORPH_MS = 520;
+
+function swapImageBoxMedia(imageBoxEl, applyMedia, { transition = false } = {}) {
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  clearTimeout(imageBoxEl._swapTimer);
+  imageBoxEl.classList.remove("is-mixing");
+
+  if (!transition || reduceMotion) {
+    imageBoxEl.classList.remove("is-swapping");
+    applyMedia(imageBoxEl);
+    return;
+  }
+
+  // Project swipe — blur out through white, then fade new media in
+  imageBoxEl.classList.add("is-swapping");
+  imageBoxEl._swapTimer = setTimeout(() => {
+    applyMedia(imageBoxEl);
+    requestAnimationFrame(() => {
+      imageBoxEl.classList.remove("is-swapping");
+    });
+  }, MEDIA_SWAP_MS);
+}
+
+// Close morph — stack showreel over current media and crossfade/blur mix (no white)
+function mixImageBoxToShowreel(imageBoxEl) {
+  clearTimeout(imageBoxEl._swapTimer);
+  imageBoxEl.classList.remove("is-swapping");
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    imageBoxEl.innerHTML = "";
+    imageBoxEl.appendChild(createShowreelEl());
+    return;
+  }
+
+  [...imageBoxEl.children].forEach((child) => {
+    child.classList.add("media-outgoing");
+  });
+
+  const incoming = createShowreelEl();
+  incoming.classList.add("media-incoming");
+  imageBoxEl.appendChild(incoming);
+
+  // Paint opacity:0 first, then mix so both medias blend mid-morph
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      imageBoxEl.classList.add("is-mixing");
+    });
+  });
+}
+
 function renderProject(i, { decode = false, mediaTransition = false } = {}) {
   const p = site.projects[i];
   if (!p) return;
@@ -168,25 +239,11 @@ function renderProject(i, { decode = false, mediaTransition = false } = {}) {
     }
   });
 
-  const imageBoxEl = document.getElementById("image-box");
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  if (!mediaTransition || reduceMotion) {
-    imageBoxEl.classList.remove("is-swapping");
-    setProjectMedia(imageBoxEl, p);
-    return;
-  }
-
-  // Blur-fade out → swap media → blur-fade in
-  clearTimeout(imageBoxEl._swapTimer);
-  imageBoxEl.classList.add("is-swapping");
-  imageBoxEl._swapTimer = setTimeout(() => {
-    setProjectMedia(imageBoxEl, p);
-    // next frame so the browser applies the outgoing state before clearing it
-    requestAnimationFrame(() => {
-      imageBoxEl.classList.remove("is-swapping");
-    });
-  }, 600);
+  swapImageBoxMedia(
+    document.getElementById("image-box"),
+    (box) => setProjectMedia(box, p),
+    { transition: mediaTransition },
+  );
 }
 
 function applySite(data) {
@@ -284,6 +341,7 @@ function setExpanded() {
 let closeCleanup = null;
 let closeCleanupTimer = null;
 let closePhaseTimer = null;
+let isClosing = false;
 
 function cancelCloseCleanup() {
   if (closeCleanup) {
@@ -292,10 +350,22 @@ function cancelCloseCleanup() {
   }
   clearTimeout(closeCleanupTimer);
   clearTimeout(closePhaseTimer);
+  clearTimeout(imageBox._swapTimer);
+  clearTimeout(imageBox._mixTimer);
+  imageBox.classList.remove("is-swapping", "is-mixing");
 }
 
 function openModal() {
   cancelCloseCleanup();
+  isClosing = false;
+
+  // Restore project media (close may have left a mixed/showreel stack in the slot)
+  const p = site.projects[projectIndex];
+  if (p) {
+    syncWebsiteLink(p);
+    setProjectMedia(imageBox, p);
+  }
+
   modalLayer.hidden = false;
 
   // Start collapsed on the dark box, without animating
@@ -334,7 +404,8 @@ function modalTextTargets() {
 }
 
 function closeModal() {
-  if (!frame.classList.contains("is-open")) return;
+  if (!frame.classList.contains("is-open") || isClosing) return;
+  isClosing = true;
 
   // Phase 1 — decode the details out, bottom line first (mirror of the entry)
   const els = modalTextTargets().map(([el]) => el).reverse();
@@ -346,7 +417,7 @@ function closeModal() {
   });
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) outTotal = 0;
 
-  // Phase 2 — once the text is gone, morph the panel back into the dark box
+  // Phase 2 — morph back; media mix runs mid-morph (not before)
   clearTimeout(closePhaseTimer);
   closePhaseTimer = setTimeout(startCollapse, outTotal + 60);
 }
@@ -355,8 +426,15 @@ function startCollapse() {
   frame.classList.remove("is-open");
   setCollapsed();
 
+  // Mid-morph (~35% in): crossfade/blur mix project media ↔ studio showreel
+  clearTimeout(imageBox._mixTimer);
+  imageBox._mixTimer = setTimeout(() => {
+    mixImageBoxToShowreel(imageBox);
+  }, Math.round(MORPH_MS * 0.35));
+
   const cleanup = () => {
     cancelCloseCleanup();
+    isClosing = false;
     darkBox.style.visibility = "";
     document.getElementById("showreel")?.play().catch(() => {});
     modalLayer.hidden = true;
@@ -375,6 +453,11 @@ function startCollapse() {
 
 openBtn.addEventListener("click", openModal);
 closeBtn.addEventListener("click", closeModal);
+
+// Click outside the project panel (backdrop) to close
+modalLayer.addEventListener("click", (e) => {
+  if (e.target === modalLayer) closeModal();
+});
 
 // Modal NEXT — cycle through projects, decoding text + blur-fading media
 document.getElementById("next-btn").addEventListener("click", () => {

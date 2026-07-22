@@ -2,7 +2,7 @@
 // Client edits live in Sanity Studio: Site Settings (availability toggle) +
 // Projects. Published changes hit the CDN in ~60s — no redeploy needed.
 // Set SANITY_PROJECT_ID after creating the project (studio/.env + here).
-const SANITY_PROJECT_ID = "REPLACE_ME"; // from sanity.io/manage
+const SANITY_PROJECT_ID = "tpny8o4s"; // from sanity.io/manage
 const SANITY_DATASET = "production";
 const SANITY_API_VERSION = "2024-01-01";
 
@@ -23,7 +23,7 @@ function renderAvailability() {
   pill.classList.toggle("is-off", !site.available);
   label.textContent = site.available
     ? "AVAILABLE FOR PROJECTS"
-    : "NOT AVAILABLE FOR PROJECTS";
+    : "NOT AVAILABLE";
 }
 
 // ---------- Text scramble (decode) effect ----------
@@ -123,7 +123,24 @@ function projectTextTargets(p) {
   ];
 }
 
-function renderProject(i, { decode = false } = {}) {
+function setProjectMedia(imageBoxEl, p) {
+  imageBoxEl.innerHTML = "";
+  if (!p?.media) return;
+  const isVideo = /\.(mp4|webm|mov)$/i.test(p.media);
+  const el = document.createElement(isVideo ? "video" : "img");
+  el.src = p.media;
+  if (isVideo) {
+    el.autoplay = true;
+    el.muted = true;
+    el.loop = true;
+    el.playsInline = true;
+  } else {
+    el.alt = p.name;
+  }
+  imageBoxEl.appendChild(el);
+}
+
+function renderProject(i, { decode = false, mediaTransition = false } = {}) {
   const p = site.projects[i];
   if (!p) return;
   projectTextTargets(p).forEach(([el, text], idx) => {
@@ -135,22 +152,24 @@ function renderProject(i, { decode = false } = {}) {
   });
 
   const imageBoxEl = document.getElementById("image-box");
-  imageBoxEl.innerHTML = "";
-  if (p.media) {
-    const isVideo = /\.(mp4|webm|mov)$/i.test(p.media);
-    const el = document.createElement(isVideo ? "video" : "img");
-    el.src = p.media;
-    if (isVideo) {
-      el.autoplay = true;
-      el.muted = true;
-      el.loop = true;
-      el.playsInline = true;
-    } else {
-      el.alt = p.name;
-    }
-    el.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
-    imageBoxEl.appendChild(el);
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!mediaTransition || reduceMotion) {
+    imageBoxEl.classList.remove("is-swapping");
+    setProjectMedia(imageBoxEl, p);
+    return;
   }
+
+  // Blur-fade out → swap media → blur-fade in
+  clearTimeout(imageBoxEl._swapTimer);
+  imageBoxEl.classList.add("is-swapping");
+  imageBoxEl._swapTimer = setTimeout(() => {
+    setProjectMedia(imageBoxEl, p);
+    // next frame so the browser applies the outgoing state before clearing it
+    requestAnimationFrame(() => {
+      imageBoxEl.classList.remove("is-swapping");
+    });
+  }, 600);
 }
 
 function applySite(data) {
@@ -340,11 +359,11 @@ function startCollapse() {
 openBtn.addEventListener("click", openModal);
 closeBtn.addEventListener("click", closeModal);
 
-// Modal NEXT — cycle through projects, decoding the new values in
+// Modal NEXT — cycle through projects, decoding text + blur-fading media
 document.getElementById("next-btn").addEventListener("click", () => {
   if (site.projects.length < 2) return;
   projectIndex = (projectIndex + 1) % site.projects.length;
-  renderProject(projectIndex, { decode: true });
+  renderProject(projectIndex, { decode: true, mediaTransition: true });
 });
 
 document.addEventListener("keydown", (e) => {

@@ -6,5 +6,8 @@ export default defineCliConfig({
     dataset: process.env.SANITY_STUDIO_DATASET || 'production',
   },
   studioHost: 'arc-web',
-  autoUpdates: true,
+  deployment: {
+    appId: 'mggqth80wkcxz5qoehic05or',
+    autoUpdates: true,
+  },
 })
